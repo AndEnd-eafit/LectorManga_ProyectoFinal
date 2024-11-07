@@ -67,8 +67,9 @@ if st.button("Analizar la imagen") and uploaded_image and api_key:
 
         # Prompt para la descripción de la imagen
         prompt_text = (
-            "Eres un experto en análisis de imágenes. Examina en detalle la siguiente imagen "
-            "y proporciona una explicación precisa en español, destacando elementos clave y su importancia."
+            "Eres un lector de manga, que son una serie de viñetas con dibujos y burbujas de texto que se lee de derecha a izquierda, "
+            "debes proporcionar una explicación precisa en español sobre lo que está ocurriendo en las viñetas, y decir textualmente lo"
+            "que se encuentra en las burbujas de diálogo"
         )
 
         if show_details and additional_details:
