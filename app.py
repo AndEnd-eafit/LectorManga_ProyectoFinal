@@ -10,6 +10,7 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.llms import OpenAI
 from langchain.callbacks import get_openai_callback
 import openai
+import io
 
 st.markdown("""
     <style>
@@ -41,12 +42,16 @@ def encode_image(image_file):
     return base64.b64encode(image_file.getvalue()).decode("utf-8")
 
 # Carga de archivo de imagen
-uploaded_image = st.file_uploader("Sube una imagen", type=["jpg", "png", "jpeg", "pdf"])
+uploaded_image = st.file_uploader("Sube una imagen", type=["jpg", "png", "jpeg"])
 
 if uploaded_image:
-    # Mostrar imagen cargada con expandir
-    with st.expander("Imagen", expanded=True):
-        st.image(uploaded_image, caption=uploaded_image.name, use_column_width=True)
+    try:
+        # Intentar abrir la imagen para verificar que es válida
+        image = Image.open(uploaded_image)
+        with st.expander("Imagen", expanded=True):
+            st.image(image, caption=uploaded_image.name, use_column_width=True)
+    except Exception as e:
+        st.error("El archivo cargado no es una imagen válida.")
 
 # Añadir toggle para detalles adicionales
 show_details = st.checkbox("Añadir detalles sobre la imagen", value=False)
@@ -109,11 +114,6 @@ if uploaded_pdf:
         # Cargar el modelo de lenguaje y realizar la cadena de preguntas y respuestas
         llm = OpenAI(model_name="gpt-4")
         chain = load_qa_chain(llm, chain_type="stuff")
-
-        # Mostrar la respuesta
-        with get_openai_callback() as cb:
-            response = chain.run(input_documents=docs, question=user_question)
-            st.write(response)
 
         # Mostrar la respuesta
         with get_openai_callback() as cb:
