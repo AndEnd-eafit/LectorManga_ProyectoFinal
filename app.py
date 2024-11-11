@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 from PIL import Image
-import base64
+import pytesseract  # Biblioteca OCR para extraer texto de imágenes
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -38,9 +38,10 @@ api_key = st.text_input('Ingresa tu Clave de API de OpenAI', type='password')
 if api_key:
     openai.api_key = api_key  # Configurar la clave de API directamente con openai
 
-# Función para codificar la imagen en base64
-def encode_image(image_file):
-    return base64.b64encode(image_file.getvalue()).decode("utf-8")
+# Función para analizar la imagen con OCR
+def analyze_image_with_ocr(image):
+    text = pytesseract.image_to_string(image, lang='spa')  # 'spa' para español
+    return text
 
 # Carga de archivo de imagen
 uploaded_image = st.file_uploader("Sube una imagen", type=["jpg", "png", "jpeg"])
@@ -64,26 +65,28 @@ if show_details:
 # Botón para análisis de imagen
 if st.button("Analizar la imagen") and uploaded_image and api_key:
     with st.spinner("Analizando imagen..."):
-        base64_image = encode_image(uploaded_image)
-
+        # Extraer texto de la imagen usando OCR
+        extracted_text = analyze_image_with_ocr(image)
+        
         # Prompt para la descripción de la imagen
         prompt_text = (
-            "Eres un lector de manga, que son una serie de viñetas con dibujos y burbujas de texto que se lee de derecha a izquierda, "
-            "debes proporcionar una explicación precisa en español sobre lo que está ocurriendo en las viñetas, y decir textualmente lo"
-            "que se encuentra en las burbujas de diálogo"
+            "Eres un lector de manga, que son una serie de viñetas con dibujos y burbujas de texto que se lee de derecha a izquierda. "
+            "Proporciona una explicación precisa en español sobre lo que está ocurriendo en las viñetas y transcribe el contenido extraído:"
+            f"\n\nTexto extraído:\n{extracted_text}"
         )
 
         if show_details and additional_details:
             prompt_text += f"\n\nContexto adicional proporcionado:\n{additional_details}"
 
-        # Solicitud a la API de OpenAI para analizar la imagen
+        # Solicitud a la API de OpenAI para analizar el texto extraído de la imagen
         try:
-            response = openai.Image.create(
+            response = openai.Completion.create(
+                engine="text-davinci-003",
                 prompt=prompt_text,
-                image=f"data:image/jpeg;base64,{base64_image}",
-                model="gpt-4-vision"
+                max_tokens=500,
+                temperature=0.7
             )
-            st.markdown(response['data'][0]['text'])
+            st.markdown(response.choices[0].text)
         except Exception as e:
             st.error(f"Ocurrió un error: {e}")
 
