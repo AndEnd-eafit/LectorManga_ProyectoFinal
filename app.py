@@ -10,7 +10,6 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.llms import OpenAI
 from langchain.callbacks import get_openai_callback
 import openai
-import pytesseract
 import io
 
 st.markdown("""
@@ -27,7 +26,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Título y subtítulo de la aplicación
+# Título de la aplicación
 st.title('LectorManga')
 
 # Barra lateral con información
@@ -36,88 +35,84 @@ with st.sidebar:
 
 # Entrada para la clave de API de OpenAI
 api_key = st.text_input('Ingresa tu Clave de API de OpenAI', type='password')
-if api_key:
-    openai.api_key = api_key  # Configurar la clave de API directamente con openai
+os.environ['OPENAI_API_KEY'] = api_key
 
-# Carga de archivo de imagen
-uploaded_image = st.file_uploader("Sube una imagen", type=["jpg", "png", "jpeg"])
+# Función para codificar la imagen en base64
+def encode_image(image_file):
+    return base64.b64encode(image_file.getvalue()).decode("utf-8")
 
-if uploaded_image:
-    try:
-        # Intentar abrir la imagen para verificar que es válida
-        image = Image.open(uploaded_image)
-        with st.expander("Imagen", expanded=True):
-            st.image(image, caption=uploaded_image.name, use_column_width=True)
-    except Exception as e:
-        st.error("El archivo cargado no es una imagen válida.")
+# Carga de archivo (imagen o PDF)
+uploaded_file = st.file_uploader("Sube una imagen o un archivo PDF", type=["jpg", "png", "jpeg", "pdf"])
 
-# Añadir toggle para detalles adicionales
-show_details = st.checkbox("Añadir detalles sobre la imagen", value=False)
+if uploaded_file:
+    file_type = uploaded_file.type
 
-if show_details:
-    # Campo de texto para detalles adicionales
-    additional_details = st.text_area("Añadir contexto de la imagen aquí:")
-
-# Botón para análisis de imagen
-if st.button("Analizar la imagen") and uploaded_image and api_key:
-    with st.spinner("Analizando imagen..."):
+    if file_type in ["image/jpeg", "image/png", "image/jpg"]:
+        # Si es una imagen
         try:
-            # Extraer texto de la imagen usando OCR
-            extracted_text = pytesseract.image_to_string(image, lang="spa")
-            
-            # Crear un prompt para enviar a la API de OpenAI
-            prompt_text = (
-                "Eres un lector de manga, que son una serie de viñetas con dibujos y burbujas de texto que se lee de derecha a izquierda. "
-                "Proporciona una explicación precisa en español sobre lo que está ocurriendo en las viñetas, y transcribe textualmente lo "
-                "que se encuentra en las burbujas de diálogo.\n\n"
-                f"Texto extraído de la imagen:\n{extracted_text}"
-            )
+            image = Image.open(uploaded_file)
+            with st.expander("Imagen", expanded=True):
+                st.image(image, caption=uploaded_file.name, use_column_width=True)
 
-            if show_details and additional_details:
-                prompt_text += f"\n\nContexto adicional proporcionado:\n{additional_details}"
+            # Añadir opción para detalles adicionales
+            show_details = st.checkbox("Añadir detalles sobre la imagen", value=False)
+            additional_details = ""
+            if show_details:
+                additional_details = st.text_area("Añadir contexto de la imagen aquí:")
 
-            # Solicitud a la API de OpenAI para analizar el texto extraído
-            response = openai.Completion.create(
-                engine="text-davinci-003",
-                prompt=prompt_text,
-                max_tokens=500,
-                temperature=0.5
-            )
-            st.markdown(response['choices'][0]['text'])
+            # Botón para análisis de imagen
+            if st.button("Analizar la imagen") and api_key:
+                with st.spinner("Analizando imagen..."):
+                    base64_image = encode_image(uploaded_file)
+
+                    prompt_text = (
+                        "Eres un experto en análisis de imágenes. Examina en detalle la siguiente imagen "
+                        "y proporciona una explicación precisa en español, destacando elementos clave y su importancia."
+                    )
+                    if show_details and additional_details:
+                        prompt_text += f"\n\nContexto adicional proporcionado:\n{additional_details}"
+
+                    # Solicitud a la API de OpenAI para analizar la imagen
+                    try:
+                        response = openai.Image.create(
+                            prompt=prompt_text,
+                            image=f"data:image/jpeg;base64,{base64_image}",
+                            model="gpt-4-vision"
+                        )
+                        st.markdown(response['data'][0]['text'])
+                    except Exception as e:
+                        st.error(f"Ocurrió un error: {e}")
         except Exception as e:
-            st.error(f"Ocurrió un error: {e}")
+            st.error("El archivo cargado no es una imagen válida.")
 
-# Cargar archivo PDF
-uploaded_pdf = st.file_uploader("Carga el archivo PDF", type="pdf")
+    elif file_type == "application/pdf":
+        # Si es un PDF
+        pdf_reader = PdfReader(uploaded_file)
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text()
 
-if uploaded_pdf:
-    # Extraer y procesar el texto del PDF
-    pdf_reader = PdfReader(uploaded_pdf)
-    text = ""
-    for page in pdf_reader.pages:
-        text += page.extract_text()
+        # Dividir el texto en chunks
+        text_splitter = CharacterTextSplitter(separator="\n", chunk_size=500, chunk_overlap=20, length_function=len)
+        chunks = text_splitter.split_text(text)
 
-    # Dividir el texto en chunks
-    text_splitter = CharacterTextSplitter(separator="\n", chunk_size=500, chunk_overlap=20, length_function=len)
-    chunks = text_splitter.split_text(text)
+        # Crear embeddings a partir de los fragmentos del texto
+        embeddings = OpenAIEmbeddings()
+        knowledge_base = FAISS.from_texts(chunks, embeddings)
 
-    # Crear embeddings a partir de los fragmentos del texto
-    embeddings = OpenAIEmbeddings()
-    knowledge_base = FAISS.from_texts(chunks, embeddings)
+        # Mostrar el campo de entrada para las preguntas
+        st.subheader("Escribe lo que quieres saber sobre el documento")
+        user_question = st.text_area(" ")
 
-    # Mostrar el campo de entrada para las preguntas
-    st.subheader("Escribe lo que quieres saber sobre el documento")
-    user_question = st.text_area(" ")
+        if user_question:
+            # Realizar búsqueda en la base de conocimientos
+            docs = knowledge_base.similarity_search(user_question)
 
-    if user_question:
-        # Realizar búsqueda en la base de conocimientos
-        docs = knowledge_base.similarity_search(user_question)
+            # Cargar el modelo de lenguaje y realizar la cadena de preguntas y respuestas
+            llm = OpenAI(model_name="gpt-4")
+            chain = load_qa_chain(llm, chain_type="stuff")
 
-        # Cargar el modelo de lenguaje y realizar la cadena de preguntas y respuestas
-        llm = OpenAI(api_key=api_key, model_name="gpt-4")
-        chain = load_qa_chain(llm, chain_type="stuff")
-
-        # Mostrar la respuesta
-        with get_openai_callback() as cb:
-            response = chain.run(input_documents=docs, question=user_question)
-            st.write(response)
+            # Mostrar la respuesta
+            with get_openai_callback() as cb:
+                response = chain.run(input_documents=docs, question=user_question)
+                st.write(response)
