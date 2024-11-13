@@ -34,7 +34,8 @@ with st.sidebar:
 
 # Entrada para la clave de API de OpenAI
 api_key = st.text_input('Ingresa tu Clave de API de OpenAI', type='password')
-os.environ['OPENAI_API_KEY'] = api_key
+if api_key:
+    openai.api_key = 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  # Configura la clave API de forma directa con openai
 
 # Función para codificar la imagen en base64
 def encode_image(image_file):
@@ -107,8 +108,13 @@ if uploaded_pdf:
         docs = knowledge_base.similarity_search(user_question)
 
         # Cargar el modelo de lenguaje y realizar la cadena de preguntas y respuestas
-        llm = OpenAI(model_name="gpt-4")
+        llm = OpenAI(api_key=api_key, model_name="gpt-4")
         chain = load_qa_chain(llm, chain_type="stuff")
+
+        # Mostrar la respuesta
+        with get_openai_callback() as cb:
+            response = chain.run(input_documents=docs, question=user_question)
+            st.write(response)
 
         # Mostrar la respuesta
         with get_openai_callback() as cb:
