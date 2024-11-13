@@ -10,6 +10,7 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.llms import OpenAI
 from langchain.callbacks import get_openai_callback
 import openai
+import io
 
 st.markdown("""
     <style>
@@ -35,7 +36,7 @@ with st.sidebar:
 # Entrada para la clave de API de OpenAI
 api_key = st.text_input('Ingresa tu Clave de API de OpenAI', type='password')
 if api_key:
-    openai.api_key = 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  # Configura la clave API de forma directa con openai
+    openai.api_key = api_key  # Configurar la clave de API directamente con openai
 
 # Función para codificar la imagen en base64
 def encode_image(image_file):
@@ -45,9 +46,13 @@ def encode_image(image_file):
 uploaded_image = st.file_uploader("Sube una imagen", type=["jpg", "png", "jpeg"])
 
 if uploaded_image:
-    # Mostrar imagen cargada con expandir
-    with st.expander("Imagen", expanded=True):
-        st.image(uploaded_image, caption=uploaded_image.name, use_column_width=True)
+    try:
+        # Intentar abrir la imagen para verificar que es válida
+        image = Image.open(uploaded_image)
+        with st.expander("Imagen", expanded=True):
+            st.image(image, caption=uploaded_image.name, use_column_width=True)
+    except Exception as e:
+        st.error("El archivo cargado no es una imagen válida.")
 
 # Añadir toggle para detalles adicionales
 show_details = st.checkbox("Añadir detalles sobre la imagen", value=False)
@@ -63,8 +68,9 @@ if st.button("Analizar la imagen") and uploaded_image and api_key:
 
         # Prompt para la descripción de la imagen
         prompt_text = (
-            "Eres un experto en análisis de imágenes. Examina en detalle la siguiente imagen "
-            "y proporciona una explicación precisa en español, destacando elementos clave y su importancia."
+            "Eres un lector de manga, que son una serie de viñetas con dibujos y burbujas de texto que se lee de derecha a izquierda, "
+            "debes proporcionar una explicación precisa en español sobre lo que está ocurriendo en las viñetas, y decir textualmente lo"
+            "que se encuentra en las burbujas de diálogo"
         )
 
         if show_details and additional_details:
@@ -108,13 +114,8 @@ if uploaded_pdf:
         docs = knowledge_base.similarity_search(user_question)
 
         # Cargar el modelo de lenguaje y realizar la cadena de preguntas y respuestas
-        llm = OpenAI(api_key=api_key, model_name="gpt-4")
+        llm = OpenAI(model_name="gpt-4")
         chain = load_qa_chain(llm, chain_type="stuff")
-
-        # Mostrar la respuesta
-        with get_openai_callback() as cb:
-            response = chain.run(input_documents=docs, question=user_question)
-            st.write(response)
 
         # Mostrar la respuesta
         with get_openai_callback() as cb:
