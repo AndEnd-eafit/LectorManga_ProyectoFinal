@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 from PIL import Image
-import pytesseract  # Biblioteca OCR para extraer texto de imágenes
+import base64
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -10,6 +10,7 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.llms import OpenAI
 from langchain.callbacks import get_openai_callback
 import openai
+import pytesseract
 import io
 
 st.markdown("""
@@ -38,11 +39,6 @@ api_key = st.text_input('Ingresa tu Clave de API de OpenAI', type='password')
 if api_key:
     openai.api_key = api_key  # Configurar la clave de API directamente con openai
 
-# Función para analizar la imagen con OCR
-def analyze_image_with_ocr(image):
-    text = pytesseract.image_to_string(image, lang='spa')  # 'spa' para español
-    return text
-
 # Carga de archivo de imagen
 uploaded_image = st.file_uploader("Sube una imagen", type=["jpg", "png", "jpeg"])
 
@@ -65,28 +61,29 @@ if show_details:
 # Botón para análisis de imagen
 if st.button("Analizar la imagen") and uploaded_image and api_key:
     with st.spinner("Analizando imagen..."):
-        # Extraer texto de la imagen usando OCR
-        extracted_text = analyze_image_with_ocr(image)
-        
-        # Prompt para la descripción de la imagen
-        prompt_text = (
-            "Eres un lector de manga, que son una serie de viñetas con dibujos y burbujas de texto que se lee de derecha a izquierda. "
-            "Proporciona una explicación precisa en español sobre lo que está ocurriendo en las viñetas y transcribe el contenido extraído:"
-            f"\n\nTexto extraído:\n{extracted_text}"
-        )
-
-        if show_details and additional_details:
-            prompt_text += f"\n\nContexto adicional proporcionado:\n{additional_details}"
-
-        # Solicitud a la API de OpenAI para analizar el texto extraído de la imagen
         try:
+            # Extraer texto de la imagen usando OCR
+            extracted_text = pytesseract.image_to_string(image, lang="spa")
+            
+            # Crear un prompt para enviar a la API de OpenAI
+            prompt_text = (
+                "Eres un lector de manga, que son una serie de viñetas con dibujos y burbujas de texto que se lee de derecha a izquierda. "
+                "Proporciona una explicación precisa en español sobre lo que está ocurriendo en las viñetas, y transcribe textualmente lo "
+                "que se encuentra en las burbujas de diálogo.\n\n"
+                f"Texto extraído de la imagen:\n{extracted_text}"
+            )
+
+            if show_details and additional_details:
+                prompt_text += f"\n\nContexto adicional proporcionado:\n{additional_details}"
+
+            # Solicitud a la API de OpenAI para analizar el texto extraído
             response = openai.Completion.create(
                 engine="text-davinci-003",
                 prompt=prompt_text,
                 max_tokens=500,
-                temperature=0.7
+                temperature=0.5
             )
-            st.markdown(response.choices[0].text)
+            st.markdown(response['choices'][0]['text'])
         except Exception as e:
             st.error(f"Ocurrió un error: {e}")
 
