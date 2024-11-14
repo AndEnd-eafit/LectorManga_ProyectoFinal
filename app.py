@@ -56,19 +56,19 @@ if uploaded_file is not None and api_key and analyze_button:
         # Encode the image
         base64_image = encode_image(uploaded_file)
     
-        # Optimized prompt for additional clarity and detail
-        #prompt_text = (
-        #    "You are a highly knowledgeable scientific image analysis expert. "
-        #   "Your task is to examine the following image in detail. "
-        #    "Provide a comprehensive, factual, and scientifically accurate explanation of what the image depicts. "
-        #    "Highlight key elements and their significance, and present your analysis in clear, well-structured markdown format. "
-        #    "If applicable, include any relevant scientific terminology to enhance the explanation. "
-        #    "Assume the reader has a basic understanding of scientific concepts."
-        #    "Create a detailed image caption in bold explaining in short."
-        #    "The data is about electrical energy consumption and demand."
-        #    "Write when occurs the major and minor consumption, date and hour when this be possible."
-        #    "Explain always in spanish."
-        #)
+         Optimized prompt for additional clarity and detail
+        prompt_text = (
+            "You are an avid manga reader. "
+           "Your task is to examine the following image in detail. "
+            "Provide a comprehensive, detailed and accurate explanation of what the image depicts. "
+            "Reading from right to left, giving a description of the text bubbles, and telling what they say. "
+            "Also you have to help the reader to follow the order of the action of what is he seeing in the image. "
+            "Assume the reader has a basic understanding of scientific concepts."
+            "Create a detailed image caption in bold explaining in short."
+            "The data is about electrical energy consumption and demand."
+            "Write when occurs the major and minor consumption, date and hour when this be possible."
+            "Explain always in spanish."
+        )
 
         prompt_text = ("Describe what you see in the image in spanish")
     
