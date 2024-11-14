@@ -12,7 +12,7 @@ def encode_image(image_file):
 
 st.set_page_config(page_title="LectorManga", layout="centered", initial_sidebar_state="collapsed")
 # Streamlit page setup
-st.title("Análisis de Imagen:🤖🏞️")
+st.title("LectorManga")
 #image = Image.open('OIG4.jpg')
 #st.image(image, width=350)
 with st.sidebar:
