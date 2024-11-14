@@ -66,7 +66,7 @@ if uploaded_file is not None and api_key and analyze_button:
         #    "Assume the reader has a basic understanding of scientific concepts."
         #    "Create a detailed image caption in bold."
         #    "The data is about manga in general."
-        #    "Write when occurs the major and minor consumption, date and hour when this be possible."
+        #    "Write the text inside the text bubbles and tell who said it."
         #    "Explain always in spanish."
         #)
 
