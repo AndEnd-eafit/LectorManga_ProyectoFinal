@@ -59,7 +59,7 @@ if uploaded_file is not None and api_key and analyze_button:
         # Optimized prompt for additional clarity and detail
         prompt_text = (
             "You are an avid manga reader. "
-           "Your task is to examine the following image in detail. "
+           "Your task is to examine the following image in detail and read it from right to left. "
             "Provide a comprehensive, detailed, and accurate explanation of what the image depicts. "
             "Highlight key panels and their significance, and present your analysis in clear, well-structured markdown format. "
             "If applicable, include any relevant character descriptions. "
