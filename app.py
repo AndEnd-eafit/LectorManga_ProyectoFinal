@@ -57,20 +57,17 @@ if uploaded_file is not None and api_key and analyze_button:
         base64_image = encode_image(uploaded_file)
     
         # Optimized prompt for additional clarity and detail
-        prompt_text = (
-            "You are an avid manga reader. "
-           "Your task is to examine the following image in detail and read it from right to left. "
-            "Provide a comprehensive, detailed, and accurate explanation of what the image depicts. "
-            "Write the text inside the text bubbles and tell who said it. Example. Character A looks at character B . Character A(Dialogue) and character B answer. Remember identify the names of which character depending of the information give to you in the image."
-            "Highlight key panels and their significance, and present your analysis in clear, well-structured markdown format. "
-            "If applicable, include any relevant character descriptions. "
-            "Assume the reader has a basic understanding of scientific concepts."
-            "Create a detailed image caption in bold."
-            "The data is about manga in general."
-            "Explain always in spanish."
-        )
 
-        prompt_text = ("Describe what you see in the image in spanish")
+        prompt_text = ("""You are an avid manga reader.
+           Your task is to examine the following image in detail and read it from right to left.
+            Provide a comprehensive, detailed, and accurate explanation of what the image depicts.
+            Write the text inside the text bubbles and tell who said it. Example. Character A looks at character B . Character A(Dialogue) and character B answer. Remember identify the names of which character depending of the information give to you in the image.
+            Highlight key panels and their significance, and present your analysis in clear, well-structured markdown format. 
+            If applicable, include any relevant character descriptions. 
+            Assume the reader has a basic understanding of scientific concepts.
+            Create a detailed image caption in bold.
+            The data is about manga in general.
+            Explain always in spanish.""")
     
         if show_details and additional_details:
             prompt_text += (
