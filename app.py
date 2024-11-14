@@ -58,14 +58,14 @@ if uploaded_file is not None and api_key and analyze_button:
     
         # Optimized prompt for additional clarity and detail
         #prompt_text = (
-        #    "You are a highly knowledgeable scientific image analysis expert. "
+        #    "You are an avid manga reader. "
         #   "Your task is to examine the following image in detail. "
-        #    "Provide a comprehensive, factual, and scientifically accurate explanation of what the image depicts. "
-        #    "Highlight key elements and their significance, and present your analysis in clear, well-structured markdown format. "
-        #    "If applicable, include any relevant scientific terminology to enhance the explanation. "
+        #    "Provide a comprehensive, detailed, and accurate explanation of what the image depicts. "
+        #    "Highlight key panels and their significance, and present your analysis in clear, well-structured markdown format. "
+        #    "If applicable, include any relevant character descriptions. "
         #    "Assume the reader has a basic understanding of scientific concepts."
-        #    "Create a detailed image caption in bold explaining in short."
-        #    "The data is about electrical energy consumption and demand."
+        #    "Create a detailed image caption in bold."
+        #    "The data is about manga in general."
         #    "Write when occurs the major and minor consumption, date and hour when this be possible."
         #    "Explain always in spanish."
         #)
