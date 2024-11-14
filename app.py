@@ -66,7 +66,7 @@ if uploaded_file is not None and api_key and analyze_button:
             "Assume the reader has a basic understanding of scientific concepts."
             "Create a detailed image caption in bold."
             "The data is about manga in general."
-            "Write the text inside the text bubbles and tell who said it."
+            "Write the text inside the text bubbles and tell who said it. Example. Character A looks at character B . Character A(Dialogue) and character B answer. Remember identify the names of which character depending of the information give to you in the image."
             "Explain always in spanish."
         )
 
