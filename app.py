@@ -1,84 +1,135 @@
 import os
 import streamlit as st
-from PIL import Image
 import base64
+from openai import OpenAI
 import openai
+from PIL import Image
 
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Lexend:wght@600&display=swap');
-
-    h1, h2, h3 {
-        font-family: 'Lexend', sans-serif;
-    }
-
-    p, div, label, span, input, textarea {
-        font-family: 'Inter', sans-serif;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Título y subtítulo de la aplicación
-st.title('LectorManga')
-
-# Barra lateral con información
-with st.sidebar:
-   st.subheader("Aquí podrás escuchar descripciones detalladas del manga que estás leyendo")
-
-# Entrada para la clave de API de OpenAI
-api_key = st.text_input('Ingresa tu Clave de API de OpenAI', type='password')
-if api_key:
-    openai.api_key = api_key  # Configurar la clave de API directamente con openai
-
-# Función para codificar la imagen en base64
+# Function to encode the image to base64
 def encode_image(image_file):
     return base64.b64encode(image_file.getvalue()).decode("utf-8")
 
-# Carga de archivo de imagen
-uploaded_image = st.file_uploader("Sube una imagen", type=["jpg", "png", "jpeg"])
 
-if uploaded_image:
-    try:
-        # Intentar abrir la imagen para verificar que es válida
-        image = Image.open(uploaded_image)
-        with st.expander("Imagen", expanded=True):
-            st.image(image, caption=uploaded_image.name, use_column_width=True)
-    except Exception as e:
-        st.error("El archivo cargado no es una imagen válida.")
+st.set_page_config(page_title="Analisis dde imagen", layout="centered", initial_sidebar_state="collapsed")
+# Streamlit page setup
+st.title("Análisis de Imagen:🤖🏞️")
+image = Image.open('OIG4.jpg')
+st.image(image, width=350)
+with st.sidebar:
+    st.subheader("Este Agente analiza el contenido de la imagen y responde tus preguntas.")
+ke = st.text_input('Ingresa tu Clave')
+#os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
+os.environ['OPENAI_API_KEY'] = ke
 
-# Añadir toggle para detalles adicionales
-show_details = st.checkbox("Añadir detalles sobre la imagen", value=False)
+
+# Retrieve the OpenAI API Key from secrets
+api_key = os.environ['OPENAI_API_KEY']
+
+# Initialize the OpenAI client with the API key
+client = OpenAI(api_key=api_key)
+
+# File uploader allows user to add their own image
+uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
+
+if uploaded_file:
+    # Display the uploaded image
+    with st.expander("Image", expanded = True):
+        st.image(uploaded_file, caption=uploaded_file.name, use_column_width=True)
+
+# Toggle for showing additional details input
+show_details = st.toggle("Adiciona detalles sobre la imagen", value=False)
 
 if show_details:
-    # Campo de texto para detalles adicionales
-    additional_details = st.text_area("Añadir contexto de la imagen aquí:")
+    # Text input for additional details about the image, shown only if toggle is True
+    additional_details = st.text_area(
+        "Adiciona contexto de la imagen aqui:",
+        disabled=not show_details
+    )
 
-# Botón para análisis de imagen
-if st.button("Analizar la imagen") and uploaded_image and api_key:
-    with st.spinner("Analizando imagen..."):
-        base64_image = encode_image(uploaded_image)
+# Button to trigger the analysis
+analyze_button = st.button("Analiza la imagen", type="secondary")
 
-        # Prompt para la descripción de la imagen
-        prompt_text = (
-            "Eres un lector de manga, que son una serie de viñetas con dibujos y burbujas de texto que se lee de derecha a izquierda, "
-            "debes proporcionar una explicación precisa en español sobre lo que está ocurriendo en las viñetas, y decir textualmente lo"
-            "que se encuentra en las burbujas de diálogo"
-        )
+# Check if an image has been uploaded, if the API key is available, and if the button has been pressed
+if uploaded_file is not None and api_key and analyze_button:
 
+    with st.spinner("Analizando ..."):
+        # Encode the image
+        base64_image = encode_image(uploaded_file)
+    
+        # Optimized prompt for additional clarity and detail
+        #prompt_text = (
+        #    "You are a highly knowledgeable scientific image analysis expert. "
+        #   "Your task is to examine the following image in detail. "
+        #    "Provide a comprehensive, factual, and scientifically accurate explanation of what the image depicts. "
+        #    "Highlight key elements and their significance, and present your analysis in clear, well-structured markdown format. "
+        #    "If applicable, include any relevant scientific terminology to enhance the explanation. "
+        #    "Assume the reader has a basic understanding of scientific concepts."
+        #    "Create a detailed image caption in bold explaining in short."
+        #    "The data is about electrical energy consumption and demand."
+        #    "Write when occurs the major and minor consumption, date and hour when this be possible."
+        #    "Explain always in spanish."
+        #)
+
+        prompt_text = ("Describe what you see in the image in spanish")
+    
         if show_details and additional_details:
-            prompt_text += f"\n\nContexto adicional proporcionado:\n{additional_details}"
-
-        # Solicitud a la API de OpenAI para analizar la imagen
-        try:
-            response = openai.Image.create(
-                prompt=prompt_text,
-                image=f"data:image/jpeg;base64,{base64_image}",
-                model="gpt-4-vision"
+            prompt_text += (
+                f"\n\nAdditional Context Provided by the User:\n{additional_details}"
             )
-            st.markdown(response['data'][0]['text'])
+    
+        # Create the payload for the completion request
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt_text},
+                    {
+                        "type": "image_url",
+                        "image_url": f"data:image/jpeg;base64,{base64_image}",
+                    },
+                ],
+            }
+        ]
+    
+        # Make the request to the OpenAI API
+        try:
+            full_response = ""
+            message_placeholder = st.empty()
+            response = openai.chat.completions.create(
+              model= "gpt-4o-mini",
+              messages=[
+                {
+                   "role": "user",
+                   "content": [
+                     {"type": "text", "text": prompt_text},
+                     {
+                       "type": "image_url",
+                       "image_url": {
+                         "url": f"data:image/jpeg;base64,{base64_image}",
+                       },
+                     },
+                   ],
+                  }
+                ],
+              max_tokens=300,
+              )
+            #response.choices[0].message.content
+            if response.choices[0].message.content is not None:
+                    full_response += response.choices[0].message.content
+                    message_placeholder.markdown(full_response + "▌")
+            # Final update to placeholder after the stream ends
+            message_placeholder.markdown(full_response)
+    
+            # Display the response in the app
+            #st.write(response.choices[0])
         except Exception as e:
-            st.error(f"Ocurrió un error: {e}")
-
+            st.error(f"An error occurred: {e}")
+else:
+    # Warnings for user action required
+    if not uploaded_file and analyze_button:
+        st.warning("Please upload an image.")
+    if not api_key:
+        st.warning("Por favor ingresa tu API key.")
 # Eliminamos la sección del código relacionada con el archivo PDF:
 # Cualquier bloque de código relacionado con uploaded_pdf, extracción de texto, creación de embeddings, 
 # búsqueda en FAISS, y la cadena de preguntas y respuestas ha sido removido.
