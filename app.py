@@ -7,7 +7,7 @@ from gtts import gTTS
 import time
 import glob
 
-# Configuración de la página (debe ir primero)
+# Configuración de la página
 st.set_page_config(page_title="LectorManga", layout="centered", initial_sidebar_state="collapsed")
 
 # Custom CSS para fuentes
@@ -30,8 +30,7 @@ st.markdown('<p class="title-font">LectorManga</p>', unsafe_allow_html=True)
 
 # Sidebar
 with st.sidebar:
-    st.subheader("¡Hola! Si quieres una descripción detallada de una pagina manga, nosotros somos tu solución.")
-    st.subheader("Despues de analizar la imagen, podrás copiar y pegar el texto para escucharlo en el idioma que quieras.")
+    st.subheader("Este agente analiza el contenido de la imagen y responde tus preguntas.")
 
 # Entrada de API Key
 ke = st.text_input('Ingresa tu Clave de API')
@@ -47,6 +46,7 @@ if uploaded_file:
 
 # Área para texto adicional
 show_details = st.checkbox("Agregar detalles sobre la imagen")
+additional_details = ""
 if show_details:
     additional_details = st.text_area("Añade contexto adicional aquí:")
 
@@ -57,36 +57,33 @@ if st.button("Analizar imagen"):
     elif not api_key:
         st.warning("Por favor, ingresa tu clave de API.")
     else:
-        st.success("Análisis completado (simulado).")
+        with st.spinner("Analizando la imagen..."):
+            # Simular análisis con OpenAI
+            try:
+                # Aquí se puede integrar la API de OpenAI para el análisis real
+                analysis_text = (
+                    "Esta es una descripción simulada de la imagen analizada. "
+                    "El personaje parece estar sorprendido y dice: '¡No puedo creerlo!'."
+                )
+                
+                # Agregar contexto adicional si existe
+                if additional_details:
+                    analysis_text += f" Contexto adicional proporcionado: {additional_details}"
+                
+                st.success("Análisis completado:")
+                st.markdown(f"<p class='paragraph-font'>{analysis_text}</p>", unsafe_allow_html=True)
 
-# Conversión de texto a audio
-st.markdown('<p class="title-font">Conversión de Texto a Audio</p>', unsafe_allow_html=True)
+                # Convertir el análisis a audio automáticamente
+                tts = gTTS(analysis_text, lang="es")
+                audio_file = "temp/analysis_audio.mp3"
+                tts.save(audio_file)
 
-# Entrada de texto
-text = st.text_area("Escribe el texto que deseas convertir a audio:")
+                # Reproducir el audio
+                st.audio(audio_file, format="audio/mp3")
+                st.success("Texto leído en voz alta automáticamente.")
 
-# Selección de idioma
-languages = {
-    "Español": 'es',
-    "Inglés": 'en',
-    "Ruso": 'ru',
-    "Japonés": 'ja',
-    "Italiano": 'it'
-}
-option_lang = st.selectbox("Selecciona el idioma", list(languages.keys()))
-lg = languages[option_lang]
-
-# Botón para convertir a audio
-if st.button("Convertir a audio"):
-    if text:
-        tts = gTTS(text, lang=lg)
-        audio_file = "temp/audio.mp3"
-        tts.save(audio_file)
-        with open(audio_file, "rb") as file:
-            st.audio(file.read(), format="audio/mp3")
-        st.success("Conversión a audio completada.")
-    else:
-        st.warning("Por favor, escribe algún texto para convertir.")
+            except Exception as e:
+                st.error(f"Ocurrió un error al analizar la imagen: {e}")
 
 # Eliminar archivos temporales antiguos
 if not os.path.exists("temp"):
