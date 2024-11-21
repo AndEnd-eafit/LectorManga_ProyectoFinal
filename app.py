@@ -33,18 +33,16 @@ ke = st.text_input('Ingresa tu Clave de API')
 os.environ['OPENAI_API_KEY'] = ke
 api_key = os.environ.get('OPENAI_API_KEY')
 
-# Subir archivo de imagen
-uploaded_file = st.file_uploader("Sube una imagen de manga", type=["jpg", "png", "jpeg"])
+uploaded_file = st.file_uploader("Sube una página del manga", type=["jpg", "png", "jpeg"])
 
-# Mostrar imagen subida
 if uploaded_file:
-    st.image(uploaded_file, caption="Imagen subida", use_column_width=True)
+    st.image(uploaded_file, caption="Página subida", use_column_width=True)
 
 # Área para texto adicional
 show_details = st.checkbox("Agregar detalles sobre la imagen")
 additional_details = ""
 if show_details:
-    additional_details = st.text_area("Añade contexto adicional aquí:")
+    additional_details = st.text_area("Añade especifícaciones adicionales aquí:")
 
 # Botón para analizar la imagen
 if st.button("Analizar imagen"):
