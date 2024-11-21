@@ -13,8 +13,8 @@ def encode_image(image_file):
 st.set_page_config(page_title="Analisis dde imagen", layout="centered", initial_sidebar_state="collapsed")
 # Streamlit page setup
 st.title("LectorManga")
-image = Image.open('OIG4.jpg')
-st.image(image, width=350)
+#image = Image.open('OIG4.jpg')
+#st.image(image, width=350)
 with st.sidebar:
     st.subheader("¡Hola! En está app podrás obtener descripciones detalladas de la pagina manga que requieras.")
 
