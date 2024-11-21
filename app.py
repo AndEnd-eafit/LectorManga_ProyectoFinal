@@ -14,7 +14,8 @@ st.set_page_config(page_title="LectorManga", layout="centered", initial_sidebar_
 # Streamlit page setup
 st.title("LectorManga")
 with st.sidebar:
-    st.subheader("Este agente analiza el contenido de la imagen y responde tus preguntas.")
+    st.subheader("¡Hola! en está pagina podrás subir paginas de manga y te lo describira sin problema.")
+    st.subheader("Tambien lee en voz alta.")
     
 # Entrada de la clave API
 ke = st.text_input('Ingresa tu Clave de API', type="password")
