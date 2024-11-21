@@ -1,89 +1,129 @@
 import os
 import streamlit as st
 import base64
+from openai import OpenAI
 import openai
 from PIL import Image
-from gtts import gTTS
-import time
-import glob
+
+# Function to encode the image to base64
+def encode_image(image_file):
+    return base64.b64encode(image_file.getvalue()).decode("utf-8")
+
 
 st.set_page_config(page_title="LectorManga", layout="centered", initial_sidebar_state="collapsed")
-
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Lexend:wght@600&display=swap');
-    .title-font {
-        font-family: 'Lexend', sans-serif;
-        font-size: 36px;
-    }
-    .paragraph-font {
-        font-family: 'Inter', sans-serif;
-        font-size: 18px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-st.markdown('<p class="title-font">LectorManga</p>', unsafe_allow_html=True)
-
+# Streamlit page setup
+st.title("LectorManga")
+#image = Image.open('OIG4.jpg')
+#st.image(image, width=350)
 with st.sidebar:
-    st.subheader("¡Hola! si necesitas una descripción de una pagina de manga, usa nuestros servicios.")
-    st.subheader("Después de analizar la imagen, dira en voz alta la descripción.")
-
-ke = st.text_input('Ingresa tu Clave de API')
+    st.subheader("Este Agente analiza el contenido de la imagen y responde tus preguntas.")
+ke = st.text_input('Ingresa tu Clave')
+#os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
 os.environ['OPENAI_API_KEY'] = ke
-api_key = os.environ.get('OPENAI_API_KEY')
 
-uploaded_file = st.file_uploader("Sube una página del manga", type=["jpg", "png", "jpeg"])
+
+# Retrieve the OpenAI API Key from secrets
+api_key = os.environ['OPENAI_API_KEY']
+
+# Initialize the OpenAI client with the API key
+client = OpenAI(api_key=api_key)
+
+# File uploader allows user to add their own image
+uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
-    st.image(uploaded_file, caption="Página subida", use_column_width=True)
+    # Display the uploaded image
+    with st.expander("Image", expanded = True):
+        st.image(uploaded_file, caption=uploaded_file.name, use_column_width=True)
 
-# Área para texto adicional
-show_details = st.checkbox("Agregar detalles sobre la imagen")
-additional_details = ""
+# Toggle for showing additional details input
+show_details = st.toggle("Adiciona detalles sobre la imagen", value=False)
+
 if show_details:
-    additional_details = st.text_area("Añade especifícaciones adicionales aquí:")
+    # Text input for additional details about the image, shown only if toggle is True
+    additional_details = st.text_area(
+        "Adiciona contexto de la imagen aqui:",
+        disabled=not show_details
+    )
 
-# Botón para analizar la imagen
-if st.button("Analizar imagen"):
-    if not uploaded_file:
-        st.warning("Por favor, sube una imagen para analizar.")
-    elif not api_key:
-        st.warning("Por favor, ingresa tu clave de API.")
-    else:
-        with st.spinner("Analizando la imagen..."):
-            # Simular análisis con OpenAI
-            try:
-                # Aquí se puede integrar la API de OpenAI para el análisis real
-                analysis_text = (
-                    "Esta es una descripción simulada de la imagen analizada. "
-                    "El personaje parece estar sorprendido y dice: '¡No puedo creerlo!'."
-                )
-                
-                # Agregar contexto adicional si existe
-                if additional_details:
-                    analysis_text += f" Contexto adicional proporcionado: {additional_details}"
-                
-                st.success("Análisis completado:")
-                st.markdown(f"<p class='paragraph-font'>{analysis_text}</p>", unsafe_allow_html=True)
+# Button to trigger the analysis
+analyze_button = st.button("Analiza la imagen", type="secondary")
 
-                # Convertir el análisis a audio automáticamente
-                tts = gTTS(analysis_text, lang="es")
-                audio_file = "temp/analysis_audio.mp3"
-                tts.save(audio_file)
+# Check if an image has been uploaded, if the API key is available, and if the button has been pressed
+if uploaded_file is not None and api_key and analyze_button:
 
-                # Reproducir el audio
-                st.audio(audio_file, format="audio/mp3")
-                st.success("Texto leído en voz alta automáticamente.")
+    with st.spinner("Analizando ..."):
+        # Encode the image
+        base64_image = encode_image(uploaded_file)
+    
+        # Optimized prompt for additional clarity and detail
 
-            except Exception as e:
-                st.error(f"Ocurrió un error al analizar la imagen: {e}")
-
-# Eliminar archivos temporales antiguos
-if not os.path.exists("temp"):
-    os.mkdir("temp")
+        prompt_text = ("""You are an avid manga reader.
+           Your task is to examine the following image in detail and read it from right to left.
+            Provide a comprehensive, detailed, and accurate explanation of what the image depicts.
+            Write the text inside the text bubbles and tell who said it. Example. Character A looks at character B . Character A(Dialogue) and character B answer. Remember identify the names of which character depending of the information give to you in the image.
+            Highlight key panels and their significance, and present your analysis in clear, well-structured markdown format. 
+            If applicable, include any relevant character descriptions. 
+            Assume the reader has a basic understanding of scientific concepts.
+            Create a detailed image caption in bold.
+            The data is about manga in general.
+            Explain always in spanish.""")
+    
+        if show_details and additional_details:
+            prompt_text += (
+                f"\n\nAdditional Context Provided by the User:\n{additional_details}"
+            )
+    
+        # Create the payload for the completion request
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt_text},
+                    {
+                        "type": "image_url",
+                        "image_url": f"data:image/jpeg;base64,{base64_image}",
+                    },
+                ],
+            }
+        ]
+    
+        # Make the request to the OpenAI API
+        try:
+            full_response = ""
+            message_placeholder = st.empty()
+            response = openai.chat.completions.create(
+              model= "gpt-4o-mini",
+              messages=[
+                {
+                   "role": "user",
+                   "content": [
+                     {"type": "text", "text": prompt_text},
+                     {
+                       "type": "image_url",
+                       "image_url": {
+                         "url": f"data:image/jpeg;base64,{base64_image}",
+                       },
+                     },
+                   ],
+                  }
+                ],
+              max_tokens=300,
+              )
+            #response.choices[0].message.content
+            if response.choices[0].message.content is not None:
+                    full_response += response.choices[0].message.content
+                    message_placeholder.markdown(full_response + "▌")
+            # Final update to placeholder after the stream ends
+            message_placeholder.markdown(full_response)
+    
+            # Display the response in the app
+            #st.write(response.choices[0])
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
 else:
-    now = time.time()
-    for f in glob.glob("temp/*.mp3"):
-        if os.stat(f).st_mtime < now - 7 * 86400:  # Más de 7 días
-            os.remove(f)
+    # Warnings for user action required
+    if not uploaded_file and analyze_button:
+        st.warning("Please upload an image.")
+    if not api_key:
+        st.warning("Por favor ingresa tu API key.")
