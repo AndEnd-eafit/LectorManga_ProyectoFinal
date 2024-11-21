@@ -30,8 +30,8 @@ st.markdown('<p class="title-font">LectorManga</p>', unsafe_allow_html=True)
 
 # Sidebar
 with st.sidebar:
-    st.subheader("Este agente analiza el contenido de la imagen y responde tus preguntas.")
-    st.subheader("Escribe y/o selecciona texto para ser escuchado.")
+    st.subheader("¡Hola! Si quieres una descripción detallada de una pagina manga, nosotros somos tu solución.")
+    st.subheader("Despues de analizar la imagen, podrás copiar y pegar el texto para escucharlo en el idioma que quieras.")
 
 # Entrada de API Key
 ke = st.text_input('Ingresa tu Clave de API')
