@@ -58,8 +58,7 @@ if uploaded_file is not None and api_key and analyze_button:
         base64_image = encode_image(uploaded_file)
     
         # Optimized prompt for additional clarity and detail
-        prompt_text = ("You are an avid manga reader. Your task is to examine the following image in detail and read it from right to left. Provide a comprehensive, detailed, and accurate explanation of what the image depicts. Write the text inside the text bubbles and tell who said it. Example. Character A looks at character B . Character A(Dialogue) and character B answer. Remember identify the names of which character depending of the information give to you in the image. Highlight key panels and their significance, and present your analysis in clear, well-structured markdown format. If applicable, include any relevant character descriptions. Assume the reader has a basic understanding of scientific concepts. Create a detailed image caption in bold. The data is about manga in general. Explain always in spanish. and mention the dialogues of the characters"
-         )
+        prompt_text = ("Eres un lector de manga, un estilo de comic que se lee de derecha a izquierda. Estas para asistir a los usuarios que tengan dificultades para interpretar imagenes o comic. Analizaras cada anel y le daras una descripcion detallada al usuario. Ejemplo , en este panel se ve a un personaje con gafas y dice-texto- mientras ve a otro personaje . Separa sus dialogos en lineas organizadas comosi fuera un guion"  )
 
         prompt_text = ("Describe what you see in the image in spanish")
     
