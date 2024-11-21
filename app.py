@@ -12,11 +12,12 @@ def encode_image(image_file):
 
 st.set_page_config(page_title="Analisis dde imagen", layout="centered", initial_sidebar_state="collapsed")
 # Streamlit page setup
-st.title("Análisis de Imagen:🤖🏞️")
+st.title("LectorManga")
 image = Image.open('OIG4.jpg')
 st.image(image, width=350)
 with st.sidebar:
-    st.subheader("Este Agente analiza el contenido de la imagen y responde tus preguntas.")
+    st.subheader("¡Hola! En está app podrás obtener descripciones detalladas de la pagina manga que requieras.")
+
 ke = st.text_input('Ingresa tu Clave')
 #os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
 os.environ['OPENAI_API_KEY'] = ke
