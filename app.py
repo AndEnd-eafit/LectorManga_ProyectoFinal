@@ -27,7 +27,7 @@ st.markdown('<p class="title-font">LectorManga</p>', unsafe_allow_html=True)
 
 with st.sidebar:
     st.subheader("¡Hola! si necesitas una descripción de una pagina de manga, usa nuestros servicios.")
-    st.subheader("DEspues de analizar la imagen, dira en voz alta la descripción.")
+    st.subheader("Después de analizar la imagen, dira en voz alta la descripción.")
 
 ke = st.text_input('Ingresa tu Clave de API')
 os.environ['OPENAI_API_KEY'] = ke
