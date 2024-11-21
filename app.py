@@ -50,13 +50,7 @@ if st.button("Analizar la imagen"):
 
                 # Crear el prompt detallado
                 prompt_text = """
-                Eres un lector ávido de manga.
-                Tu tarea es analizar la siguiente imagen, que debe leerse de derecha a izquierda.
-                Proporciona un análisis detallado que incluya:
-                1. Descripción de los personajes presentes.
-                2. Transcripción de los diálogos en los globos de texto, indicando quién los dice.
-                3. Explicación del significado de los paneles clave.
-                Responde en español y usa un formato claro y estructurado en markdown.
+                You are an avid manga reader. Examine the image in detail, reading from right to left. Provide a detailed explanation of the image, including text in bubbles and who says it. Identify characters and describe key panels and their significance. Present your analysis in clear markdown. Include relevant character descriptions and a detailed image caption in bold. Assume the reader understands basic scientific concepts. Explain in Spanish.
                 """
                 if additional_details:
                     prompt_text += f"\n\nDetalles adicionales proporcionados por el usuario:\n{additional_details}"
