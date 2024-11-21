@@ -4,125 +4,75 @@ import base64
 import openai
 from PIL import Image
 
-# Function to encode the image to base64
+# Función para codificar la imagen en base64
 def encode_image(image_file):
     return base64.b64encode(image_file.getvalue()).decode("utf-8")
 
-
 st.set_page_config(page_title="LectorManga", layout="centered", initial_sidebar_state="collapsed")
-# Streamlit page setup
+
+# Configuración de la página
 st.title("LectorManga")
-#image = Image.open('OIG4.jpg')
-#st.image(image, width=350)
 with st.sidebar:
     st.subheader("Este Agente analiza el contenido de la imagen y responde tus preguntas.")
-ke = st.text_input('Ingresa tu Clave')
-#os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
-os.environ['OPENAI_API_KEY'] = ke
 
+# Input para la clave API
+api_key = st.text_input('Ingresa tu clave API')
+os.environ['OPENAI_API_KEY'] = api_key
 
-# Retrieve the OpenAI API Key from secrets
-api_key = os.environ['OPENAI_API_KEY']
+# Subida de archivo
+uploaded_file = st.file_uploader("Sube una imagen", type=["jpg", "png", "jpeg"])
 
-# Initialize the OpenAI client with the API key
-client = OpenAI(api_key=api_key)
-
-# File uploader allows user to add their own image
-uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
-
+# Mostrar la imagen si se sube
 if uploaded_file:
-    # Display the uploaded image
-    with st.expander("Image", expanded = True):
-        st.image(uploaded_file, caption=uploaded_file.name, use_column_width=True)
+    st.image(uploaded_file, caption=uploaded_file.name, use_column_width=True)
 
-# Toggle for showing additional details input
-show_details = st.toggle("Adiciona detalles sobre la imagen", value=False)
+# Toggle para mostrar detalles adicionales
+show_details = st.checkbox("Añadir contexto adicional sobre la imagen")
 
 if show_details:
-    # Text input for additional details about the image, shown only if toggle is True
-    additional_details = st.text_area(
-        "Adiciona contexto de la imagen aqui:",
-        disabled=not show_details
-    )
+    additional_details = st.text_area("Añade contexto adicional aquí:")
 
-# Button to trigger the analysis
-analyze_button = st.button("Analiza la imagen", type="secondary")
+# Botón para analizar la imagen
+analyze_button = st.button("Analizar la imagen")
 
-# Check if an image has been uploaded, if the API key is available, and if the button has been pressed
-if uploaded_file is not None and api_key and analyze_button:
+# Analizar la imagen si se sube un archivo y hay una clave API
+if analyze_button:
+    if uploaded_file and api_key:
+        with st.spinner("Analizando..."):
+            try:
+                # Codificar la imagen a base64
+                base64_image = encode_image(uploaded_file)
 
-    with st.spinner("Analizando ..."):
-        # Encode the image
-        base64_image = encode_image(uploaded_file)
-    
-        # Optimized prompt for additional clarity and detail
+                # Crear el prompt
+                prompt_text = (
+                    "Eres un lector ávido de manga. Tu tarea es examinar la siguiente imagen "
+                    "en detalle y leerla de derecha a izquierda. Proporciona una explicación "
+                    "detallada y precisa de lo que muestra la imagen. Incluye texto de los "
+                    "globos de diálogo, identifica a los personajes y explica su contexto. "
+                    "Usa español para tu respuesta."
+                )
 
-        prompt_text = ("""You are an avid manga reader.
-           Your task is to examine the following image in detail and read it from right to left.
-            Provide a comprehensive, detailed, and accurate explanation of what the image depicts.
-            Write the text inside the text bubbles and tell who said it. Example. Character A looks at character B . Character A(Dialogue) and character B answer. Remember identify the names of which character depending of the information give to you in the image.
-            Highlight key panels and their significance, and present your analysis in clear, well-structured markdown format. 
-            If applicable, include any relevant character descriptions. 
-            Assume the reader has a basic understanding of scientific concepts.
-            Create a detailed image caption in bold.
-            The data is about manga in general.
-            Explain always in spanish.""")
-    
-        if show_details and additional_details:
-            prompt_text += (
-                f"\n\nAdditional Context Provided by the User:\n{additional_details}"
-            )
-    
-        # Create the payload for the completion request
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt_text},
-                    {
-                        "type": "image_url",
-                        "image_url": f"data:image/jpeg;base64,{base64_image}",
-                    },
-                ],
-            }
-        ]
-    
-        # Make the request to the OpenAI API
-        try:
-            full_response = ""
-            message_placeholder = st.empty()
-            response = openai.chat.completions.create(
-              model= "gpt-4o-mini",
-              messages=[
-                {
-                   "role": "user",
-                   "content": [
-                     {"type": "text", "text": prompt_text},
-                     {
-                       "type": "image_url",
-                       "image_url": {
-                         "url": f"data:image/jpeg;base64,{base64_image}",
-                       },
-                     },
-                   ],
-                  }
-                ],
-              max_tokens=300,
-              )
-            #response.choices[0].message.content
-            if response.choices[0].message.content is not None:
-                    full_response += response.choices[0].message.content
-                    message_placeholder.markdown(full_response + "▌")
-            # Final update to placeholder after the stream ends
-            message_placeholder.markdown(full_response)
-    
-            # Display the response in the app
-            #st.write(response.choices[0])
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
-else:
-    # Warnings for user action required
-    if not uploaded_file and analyze_button:
-        st.warning("Please upload an image.")
-    if not api_key:
-        st.warning("Por favor ingresa tu API key.")
+                if show_details and additional_details:
+                    prompt_text += f"\n\nContexto adicional proporcionado por el usuario:\n{additional_details}"
+
+                # Llamada a la API de OpenAI
+                response = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "Eres un asistente que analiza imágenes de manga."},
+                        {"role": "user", "content": prompt_text},
+                    ],
+                    max_tokens=500,
+                )
+
+                # Mostrar la respuesta
+                st.markdown("### Respuesta:")
+                st.markdown(response.choices[0].message.content)
+
+            except Exception as e:
+                st.error(f"Ocurrió un error: {e}")
+    else:
+        if not uploaded_file:
+            st.warning("Por favor, sube una imagen.")
+        if not api_key:
+            st.warning("Por favor, ingresa tu clave API.")
