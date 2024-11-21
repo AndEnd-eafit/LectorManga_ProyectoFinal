@@ -7,10 +7,8 @@ from gtts import gTTS
 import time
 import glob
 
-# Configuración de la página
 st.set_page_config(page_title="LectorManga", layout="centered", initial_sidebar_state="collapsed")
 
-# Custom CSS para fuentes
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Lexend:wght@600&display=swap');
@@ -25,14 +23,12 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Título principal
 st.markdown('<p class="title-font">LectorManga</p>', unsafe_allow_html=True)
 
-# Sidebar
 with st.sidebar:
-    st.subheader("Este agente analiza el contenido de la imagen y responde tus preguntas.")
+    st.subheader("¡Hola! si necesitas una descripción de una pagina de manga, usa nuestros servicios.")
+    st.subheader("DEspues de analizar la imagen, dira en voz alta la descripción.")
 
-# Entrada de API Key
 ke = st.text_input('Ingresa tu Clave de API')
 os.environ['OPENAI_API_KEY'] = ke
 api_key = os.environ.get('OPENAI_API_KEY')
