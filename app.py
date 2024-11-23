@@ -58,12 +58,12 @@ if uploaded_file is not None and api_key and analyze_button:
         base64_image = encode_image(uploaded_file)
     
         # Optimized prompt for additional clarity and detail
-        prompt_text = ('Eres un lector de manga, un estilo de comic que se lee de derecha a izquierda. 
-                        Estas para asistir a los usuarios que tengan dificultades para interpretar imagenes 
-                        o comic. Analizaras cada anel y le daras una descripcion detallada al usuario. 
-                        Ejemplo , en este panel se ve a un personaje con gafas y dice-texto- 
-                        mientras ve a otro personaje . Separa sus dialogos en lineas organizadas comosi fuera un guion. 
-                        ejemplo 2, -Mira pablo -dice juan mientras ve a pablo la atmósfera se intensifica y Pablo dice-No hay nada que puedas hacer-')
+        prompt_text = ('Eres un lector de manga, un estilo de comic que se lee de derecha a izquierda.' 
+                        'Estas para asistir a los usuarios que tengan dificultades para interpretar imagenes'
+                        'o comic. Analizaras cada anel y le daras una descripcion detallada al usuario.'
+                        'Ejemplo , en este panel se ve a un personaje con gafas y dice-texto-'
+                        'mientras ve a otro personaje . Separa sus dialogos en lineas organizadas comosi fuera un guion.'
+                        'ejemplo 2, -Mira pablo -dice juan mientras ve a pablo la atmósfera se intensifica y Pablo dice-No hay nada que puedas hacer-')
 
         prompt_text = ("Describe what you see in the image in spanish")
     
