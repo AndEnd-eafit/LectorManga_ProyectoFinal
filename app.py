@@ -1,120 +1,89 @@
 import os
 import streamlit as st
 import base64
-from openai import OpenAI
-import openai
 from PIL import Image
+from gtts import gTTS
+import openai
 
-# Function to encode the image to base64
+# Función para codificar la imagen a base64
 def encode_image(image_file):
     return base64.b64encode(image_file.getvalue()).decode("utf-8")
 
-# Function to handle text-to-speech conversion
-def text_to_speech(text, lg="es"):
-    from gtts import gTTS
+# Función para convertir texto a audio
+def text_to_speech(text, lang="es"):
     import uuid
-    
     result = str(uuid.uuid4())
     output_path = f"temp/{result}.mp3"
-    tts = gTTS(text, lang=lg)
+    tts = gTTS(text, lang=lang)
     tts.save(output_path)
-    return result, text
+    return result, output_path
 
-# Streamlit page setup
+# Configuración de Streamlit
 st.set_page_config(page_title="Análisis de imagen", layout="centered", initial_sidebar_state="collapsed")
-st.title("LectorManga")
-with st.sidebar:
-    st.subheader("¡Hola! En esta app podrás obtener descripciones detalladas de la página manga que requieras.")
+st.title("Lector de Manga")
+st.sidebar.subheader("¡Obtén descripciones detalladas de tu manga!")
 
-# API Key input
-ke = st.text_input('Ingresa tu Clave')
-os.environ['OPENAI_API_KEY'] = ke
-api_key = os.environ['OPENAI_API_KEY']
+# Ingresar API Key
+ke = st.text_input('Ingresa tu Clave API')
+if ke:
+    openai.api_key = ke
 
-# Initialize OpenAI client with the API key
-if api_key:
-    openai.api_key = api_key
-
-# File uploader allows user to add their own image
+# Subir archivo de imagen
 uploaded_file = st.file_uploader("Sube una imagen", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
-    # Display the uploaded image
-    with st.expander("Imagen", expanded=True):
-        st.image(uploaded_file, caption=uploaded_file.name, use_column_width=True)
+    st.image(uploaded_file, caption=uploaded_file.name, use_column_width=True)
 
-# Toggle for showing additional details input
+# Ingresar detalles adicionales
 show_details = st.checkbox("Adicionar detalles sobre la imagen", value=False)
-
 if show_details:
-    # Text input for additional details about the image
-    additional_details = st.text_area(
-        "Adiciona contexto de la imagen aquí:",
-        disabled=not show_details
-    )
+    additional_details = st.text_area("Añade contexto adicional:")
 
-# Button to trigger the analysis
-analyze_button = st.button("Analizar la imagen")
-
-# Analyze image
-if uploaded_file is not None and api_key and analyze_button:
-
-    with st.spinner("Analizando..."):
-        # Encode the image
-        base64_image = encode_image(uploaded_file)
-    
-        # Optimized prompt for additional clarity and detail
-        prompt_text = ('Eres un lector de manga, un estilo de cómic que se lee de derecha a izquierda. '
-                       'Estás para asistir a los usuarios que tengan dificultades para interpretar imágenes '
-                       'o cómics. Analizarás cada panel y le darás una descripción detallada al usuario. '
-                       'Separa sus diálogos en líneas organizadas como si fuera un guion.')
-
-        prompt_text += "\n\nDescribe lo que ves en la imagen en español."
-
-        if show_details and additional_details:
-            prompt_text += f"\n\nContexto adicional proporcionado por el usuario:\n{additional_details}"
-    
-        # Make the request to the OpenAI API
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "Eres un asistente experto en análisis de imágenes y descripción de paneles de manga."},
-                    {"role": "user", "content": prompt_text}
-                ],
-                max_tokens=300,
-                temperature=0.7,
+# Botón para analizar la imagen
+if st.button("Analizar la imagen"):
+    if not ke:
+        st.error("Por favor ingresa tu API Key.")
+    elif not uploaded_file:
+        st.error("Por favor sube una imagen.")
+    else:
+        with st.spinner("Analizando la imagen..."):
+            # Crear el prompt de la solicitud
+            prompt = (
+                "Eres un lector experto de manga. Describe en español lo que ves en la imagen de forma detallada. "
+                "Incluye los diálogos en un formato de guion y analiza cada panel como si fueras un narrador de manga."
             )
+            if show_details and additional_details:
+                prompt += f"\n\nDetalles adicionales proporcionados: {additional_details}"
 
-            text = response.choices[0].message['content'].strip()
-            st.write("Descripción de la imagen:")
-            st.markdown(text)
-            
-        except Exception as e:
-            st.error(f"Ocurrió un error: {e}")
+            # Solicitar la descripción a la API de OpenAI
+            try:
+                response = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "Eres un asistente experto en descripciones de imágenes y análisis de paneles de manga."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=500,
+                    temperature=0.7
+                )
+                description = response.choices[0].message['content']
+                st.subheader("Descripción Generada:")
+                st.markdown(description)
+            except Exception as e:
+                st.error(f"Ocurrió un error: {e}")
 
-# Add text-to-speech conversion
+# Botón para convertir la descripción a audio
 if st.button("Convertir a Audio"):
-    if 'text' in locals() and text:
-        result, output_text = text_to_speech(text)
-        audio_file = open(f"temp/{result}.mp3", "rb")
+    if 'description' in locals() and description:
+        result, output_path = text_to_speech(description, lang="es")
+        audio_file = open(output_path, "rb")
         audio_bytes = audio_file.read()
-        st.markdown("## Tu audio:")
         st.audio(audio_bytes, format="audio/mp3", start_time=0)
-
-        # Download link for the audio file
-        with open(f"temp/{result}.mp3", "rb") as f:
-            data = f.read()
-
-        def get_binary_file_downloader_html(bin_file, file_label="File"):
-            bin_str = base64.b64encode(data).decode()
-            href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{os.path.basename(bin_file)}">Descargar {file_label}</a>'
-            return href
-        
-        st.markdown(get_binary_file_downloader_html(f"temp/{result}.mp3", file_label="Archivo de Audio"), unsafe_allow_html=True)
-
-# Warnings for user action required
-if not uploaded_file and analyze_button:
-    st.warning("Por favor, sube una imagen.")
-if not api_key:
-    st.warning("Por favor, ingresa tu API key.")
+        st.download_button(
+            label="Descargar el audio",
+            data=audio_bytes,
+            file_name="descripcion.mp3",
+            mime="audio/mp3"
+        )
+    else:
+        st.error("No hay descripción generada para convertir.")
