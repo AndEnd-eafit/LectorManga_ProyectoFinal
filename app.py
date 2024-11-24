@@ -33,7 +33,7 @@ api_key = os.environ['OPENAI_API_KEY']
 
 # Initialize OpenAI client with the API key
 if api_key:
-    client = OpenAI(api_key=api_key)
+    openai.api_key = api_key
 
 # File uploader allows user to add their own image
 uploaded_file = st.file_uploader("Sube una imagen", type=["jpg", "png", "jpeg"])
@@ -76,16 +76,17 @@ if uploaded_file is not None and api_key and analyze_button:
     
         # Make the request to the OpenAI API
         try:
-            response = openai.Completion.create(
+            response = openai.ChatCompletion.create(
                 model="gpt-4",
-                prompt=prompt_text,
+                messages=[
+                    {"role": "system", "content": "Eres un asistente experto en análisis de imágenes y descripción de paneles de manga."},
+                    {"role": "user", "content": prompt_text}
+                ],
                 max_tokens=300,
-                n=1,
-                stop=None,
                 temperature=0.7,
             )
 
-            text = response.choices[0].text.strip()
+            text = response.choices[0].message['content'].strip()
             st.write("Descripción de la imagen:")
             st.markdown(text)
             
