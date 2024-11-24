@@ -78,6 +78,8 @@ def text_to_speech(text, lg):
     tts.save(f"temp/{my_file_name}.mp3")
     return my_file_name, text
 
+text = st.text_area("Ingrese el texto a escuchar.")
+
 # Convert text to audio
 if st.button("Convertir a Audio"):
     if text:
