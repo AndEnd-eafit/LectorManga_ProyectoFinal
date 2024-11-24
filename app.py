@@ -82,25 +82,23 @@ def text_to_speech(text):
 
 text = st.text_area("Ingrese el texto a escuchar.")
 
-# Convert text to audio
-if st.button("Convertir a Audio"):
-    if text:  # Asegúrate de que exista texto para convertir
-        result, output_path = text_to_speech(text)  # Solo pasamos el texto
-        audio_file = open(output_path, "rb")
-        audio_bytes = audio_file.read()
-        st.markdown("### Tu audio generado:")
-        st.audio(audio_bytes, format="audio/mp3", start_time=0)
+# Función para convertir texto a audio
+def text_to_speech(text):
+    import uuid
+    # Crear el directorio "temp/" si no existe
+    output_dir = "temp"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-        # Opción para descargar el archivo de audio
-        with open(output_path, "rb") as f:
-            data = f.read()
-        def get_binary_file_downloader_html(bin_file, file_label='Archivo'):
-            bin_str = base64.b64encode(data).decode()
-            href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{os.path.basename(bin_file)}">Descargar {file_label}</a>'
-            return href
-        st.markdown(get_binary_file_downloader_html(output_path, file_label="Archivo de audio"), unsafe_allow_html=True)
-    else:
-        st.error("No hay texto disponible para convertir a audio. Por favor, analiza una imagen primero.")
+    # Generar un nombre único para el archivo
+    result = str(uuid.uuid4())
+    output_path = os.path.join(output_dir, f"{result}.mp3")
+    
+    # Generar el archivo de audio en español
+    tts = gTTS(text, lang="es")
+    tts.save(output_path)
+    return result, output_path
+
 
 
 # Function to remove old files
