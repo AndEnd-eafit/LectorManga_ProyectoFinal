@@ -83,7 +83,7 @@ text = st.text_area("Ingrese el texto a escuchar.")
 # Convert text to audio
 if st.button("Convertir a Audio"):
     if text:
-        result, output_text = text_to_speech(text, lg)
+        result, output_text = text_to_speech(text)
         audio_file = open(f"temp/{result}.mp3", "rb")
         audio_bytes = audio_file.read()
         st.markdown(f"## Tu audio:")
