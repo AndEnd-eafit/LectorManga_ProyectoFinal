@@ -72,18 +72,20 @@ if st.button("Analizar la imagen"):
             except Exception as e:
                 st.error(f"Ocurrió un error: {e}")
 
-def text_to_speech(text, lg):
-    tts = gTTS(text, lang=lg)
-    my_file_name = text[:20] if len(text) > 20 else "audio"
-    tts.save(f"temp/{my_file_name}.mp3")
-    return my_file_name, text
+def text_to_speech(text):
+    import uuid
+    result = str(uuid.uuid4())
+    output_path = f"temp/{result}.mp3"
+    tts = gTTS(text, lang="es")
+    tts.save(output_path)
+    return result, output_path
 
 text = st.text_area("Ingrese el texto a escuchar.")
 
 # Convert text to audio
 if st.button("Convertir a Audio"):
     if text:
-        result, output_text = text_to_speech(text)
+        result, output_path = text_to_speech(text)
         audio_file = open(f"temp/{result}.mp3", "rb")
         audio_bytes = audio_file.read()
         st.markdown(f"## Tu audio:")
@@ -97,6 +99,9 @@ if st.button("Convertir a Audio"):
             href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{os.path.basename(bin_file)}">Download {file_label}</a>'
             return href
         st.markdown(get_binary_file_downloader_html(f"temp/{result}.mp3", file_label="Audio File"), unsafe_allow_html=True)
+
+    else:
+        st.error("No hay texto disponible para convertir a audio. Por favor, analiza una imagen primero.")
 
 # Function to remove old files
 def remove_files(n):
