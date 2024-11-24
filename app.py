@@ -72,18 +72,35 @@ if st.button("Analizar la imagen"):
             except Exception as e:
                 st.error(f"Ocurrió un error: {e}")
 
-# Botón para convertir la descripción a audio
+def text_to_speech(text, lg):
+    tts = gTTS(text, lang=lg)
+    my_file_name = text[:20] if len(text) > 20 else "audio"
+    tts.save(f"temp/{my_file_name}.mp3")
+    return my_file_name, text
+
+# Convert text to audio
 if st.button("Convertir a Audio"):
-    if 'description' in locals() and description:
-        result, output_path = text_to_speech(description, lang="es")
-        audio_file = open(output_path, "rb")
+    if text:
+        result, output_text = text_to_speech(text, lg)
+        audio_file = open(f"temp/{result}.mp3", "rb")
         audio_bytes = audio_file.read()
+        st.markdown(f"## Tu audio:")
         st.audio(audio_bytes, format="audio/mp3", start_time=0)
-        st.download_button(
-            label="Descargar el audio",
-            data=audio_bytes,
-            file_name="descripcion.mp3",
-            mime="audio/mp3"
-        )
-    else:
-        st.error("No hay descripción generada para convertir.")
+
+        # Download link for the audio file
+        with open(f"temp/{result}.mp3", "rb") as f:
+            data = f.read()
+        def get_binary_file_downloader_html(bin_file, file_label='File'):
+            bin_str = base64.b64encode(data).decode()
+            href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{os.path.basename(bin_file)}">Download {file_label}</a>'
+            return href
+        st.markdown(get_binary_file_downloader_html(f"temp/{result}.mp3", file_label="Audio File"), unsafe_allow_html=True)
+
+# Function to remove old files
+def remove_files(n):
+    mp3_files = glob.glob("temp/*.mp3")
+    now = time.time()
+    n_days = n * 86400
+    for f in mp3_files:
+        if os.stat(f).st_mtime < now - n_days:
+            os.remove(f)
