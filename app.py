@@ -71,7 +71,21 @@ if uploaded_file is not None and api_key and analyze_button:
             prompt_text += (
                 f"\n\nAdditional Context Provided by the User:\n{additional_details}"
             )
-    
+    if st.button("Convertir a Audio"):
+    if text:
+        result, output_text = text_to_speech(text, lg)
+        audio_file = open(f"temp/{result}.mp3", "rb")
+        audio_bytes = audio_file.read()
+        st.markdown(f"## Tu audio:")
+        st.audio(audio_bytes, format="audio/mp3", start_time=0)
+
+        # Download link for the audio file
+        with open(f"temp/{result}.mp3", "rb") as f:
+            data = f.read()
+        def get_binary_file_downloader_html(bin_file, file_label='File'):
+            bin_str = base64.b64encode(data).decode()
+            href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{os.path.basename(bin_file)}">Download {file_label}</a>'
+            return href
         # Create the payload for the completion request
         messages = [
             {
